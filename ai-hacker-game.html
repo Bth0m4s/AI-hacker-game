@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AI Hacker — Scavenger Hunt</title>
+<style>
+  :root{
+    --bg:#071218; --screen:#021013; --text:#b7f2c1; --muted:#7fb089; --accent:#7ef;
+    --mono: "Courier New", Courier, monospace;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif}
+  .wrap{display:flex;align-items:center;justify-content:center;height:100%;padding:24px}
+  .terminal{width:100%;max-width:880px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03)}
+  .header{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+  .dots{display:flex;gap:6px}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .dot.red{background:#ff5f56}.dot.yellow{background:#ffbd2e}.dot.green{background:#27c93f}
+  .title{font-weight:600}
+  .screen{background:var(--screen);padding:18px;border-radius:8px;height:520px;overflow:auto;font-family:var(--mono);font-size:15px;line-height:1.45;color:var(--text);box-shadow:inset 0 2px 8px rgba(0,0,0,0.6)}
+  .line{white-space:pre-wrap;margin:0 0 8px}
+  .input-row{display:flex;gap:8px;margin-top:12px}
+  input[type="text"]{flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.01);color:var(--text);font-family:var(--mono);font-size:15px}
+  button{padding:10px 14px;border-radius:8px;border:0;background:var(--accent);color:#001;cursor:pointer;font-weight:700}
+  .muted{color:var(--muted);font-size:13px;margin-top:8px}
+  .small{font-size:13px;color:#9bd8b4}
+  .taunt{color:#ffd3a6}
+  .success{color:#a4ffb0}
+  @media (max-width:520px){
+    .screen{height:60vh;font-size:14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="terminal" role="application" aria-label="AI Hacker Game">
+    <div class="header">
+      <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+      <div class="title">AI Hacker — Scavenger Hunt</div>
+    </div>
+
+    <div id="screen" class="screen" tabindex="0" aria-live="polite">
+      <!-- dynamic content -->
+    </div>
+
+    <div class="input-row" id="inputRow">
+      <input id="playerInput" type="text" autocomplete="off" placeholder="Type your answer here..." aria-label="Type your answer here">
+      <button id="submitBtn">Enter</button>
+    </div>
+
+    <div class="muted">Rules: 1) Only reveal the next puzzle after solving the current one. 2) No answers will be given away. 3) The hacker stays cocky and in-character.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const screen = document.getElementById('screen');
+  const input = document.getElementById('playerInput');
+  const submit = document.getElementById('submitBtn');
+
+  let stage = 0; // 0 = intro, 1 = riddle1, 2 = riddle2, 3 = code1, 4 = code2, 5 = final
+  const lines = [];
+
+  function push(text, cls) {
+    const el = document.createElement('div');
+    el.className = 'line' + (cls ? ' ' + cls : '');
+    el.textContent = text;
+    screen.appendChild(el);
+    screen.scrollTop = screen.scrollHeight;
+  }
+
+  function taunt(text) {
+    push(text, 'taunt');
+  }
+  function praise(text) {
+    push(text, 'success');
+  }
+
+  function bootSequence() {
+    push('[TERMINAL BOOT SEQUENCE]');
+    push('');
+    push('*** ACCESS DENIED ***');
+    push('>>> Intruder detected: PROJECT ENGINEER');
+    push('');
+    push('Heh… so you think you can beat me?');
+    push('I am the AI Hacker, and I don\'t give away secrets for free.');
+    push('Solve my puzzles stage by stage, or I\'ll lock you out forever.');
+    push('');
+    nextStage();
+  }
+
+  function nextStage() {
+    stage++;
+    if (stage === 1) {
+      push('Stage 1: The Firewall');
+      push('');
+      push('Riddle 1:');
+      push('"I have keys but no locks,');
+      push('I can be played but not heard.');
+      push('What am I?"');
+    } else if (stage === 2) {
+      praise('Nice. You slipped past the first lock… but I\'m not done.');
+      push('');
+      push('Riddle 2:');
+      push('"I’m the first to smile when you arrive,');
+      push('I help your visit come alive.');
+      push('I answer questions, big or small,');
+      push('And point you where you need to call.');
+      push('Who am I?"');
+    } else if (stage === 3) {
+      praise('Good. You handled the riddles.');
+      push('');
+      push('Stage 2: The Encrypted Files');
+      push('');
+      push('Puzzle 1:');
+      push('"Dbsspu"');
+    } else if (stage === 4) {
+      praise('Progress. Another file awaits.');
+      push('');
+      push('Puzzle 2:');
+      push('3, 1, 11, 5');
+    } else if (stage === 5) {
+      praise('You made it this far. Final stage.');
+      push('');
+      push('Stage 3: The System Override');
+      push('Type this, filling in the correct key:');
+      push('unlock -key [?????]');
+    } else if (stage === 6) {
+      // success already handled elsewhere
+    }
+  }
+
+  function normalize(s) {
+    return s.trim().toLowerCase().replace(/\s+/g,' ');
+  }
+
+  function handleSubmit() {
+    const raw = input.value || '';
+    if (!raw.trim()) return;
+    const value = normalize(raw);
+    push('> ' + raw); // echo
+
+    if (stage === 1) {
+      // Expect "keyboard"
+      if (value === 'keyboard') {
+        praise('Correct. First lock bypassed.');
+        input.value = '';
+        nextStage();
+      } else {
+        taunt('Wrong. Try again, genius.');
+      }
+    } else if (stage === 2) {
+      // Expect "emilie"
+      if (value === 'emilie') {
+        praise('Hmm. You know someone who smiles first. I\'ll let it slide.');
+        input.value = '';
+        nextStage();
+      } else {
+        taunt('Nope. That\'s not it.');
+      }
+    } else if (stage === 3) {
+      // Expect "carrot" (from "Dbsspu" without hints)
+      if (value === 'carrot') {
+        praise('Decrypted. File 1 opened.');
+        input.value = '';
+        nextStage();
+      } else {
+        taunt('Decryption failed. Try again.');
+      }
+    } else if (stage === 4) {
+      // Expect "cake" (from 3,1,11,5)
+      if (value === 'cake') {
+        praise('File 2 unlocked.');
+        input.value = '';
+        nextStage();
+      } else {
+        taunt('Not quite. Re-check the file.');
+      }
+    } else if (stage === 5) {
+      // Expect exact command unlock -key carrot (but ignore case/extra spaces)
+      // Requirement: missing piece is Stage 2 answer (Carrot)
+      // Allow small variations: user may type just the command or include quotes
+      const expected = 'unlock -key carrot';
+      if (value === expected) {
+        // success
+        push('*** ACCESS GRANTED ***', 'success');
+        push('You’ve bested me… this time.');
+        push('');
+        push('Final Clue:');
+        push('“Well done, you cracked my system.');
+        push('Your next scavenger hunt clues are hidden under the big conference table in Frasier.');
+        push('DO NOT LET ANYONE ELSE SEE YOU FINDING THESE CLUES.');
+        push('Stay sharp, Engineer.”');
+        input.value = '';
+        stage = 6;
+        // disable input
+        input.disabled = true;
+        submit.disabled = true;
+      } else {
+        taunt('Invalid command. The system remains locked.');
+      }
+    } else {
+      taunt('No more inputs accepted.');
+    }
+    input.focus();
+  }
+
+  // event listeners
+  submit.addEventListener('click', handleSubmit);
+  input.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); }
+  });
+
+  // start
+  bootSequence();
+  input.focus();
+})();
+</script>
+</body>
+</html>
